@@ -35,7 +35,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  // 使用 import.meta.env.BASE_URL 以适配 GitHub Pages 子路径（例如 /Usstork/）
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 
@@ -43,6 +44,7 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    // 未登录跳转到仓库子路径下的 login，createWebHistory 已自动处理 BASE_URL
     next('/login')
   } else if (to.meta.guest && authStore.isAuthenticated) {
     next('/')
