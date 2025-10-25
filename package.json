@@ -1,0 +1,21 @@
+{
+  "name": "stock-calc",
+  "version": "1.0.0",
+  "description": "美股持仓成本计算器 - 全栈应用",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "migrate": "cd server && node scripts/migrate.js",
+    "setup": "npm run install:all && npm run migrate"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["stock", "calculator", "vue", "nodejs", "finance"],
+  "author": "AI Assistant",
+  "license": "MIT"
+}
