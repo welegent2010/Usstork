@@ -1,7 +1,7 @@
 # 美股持仓成本计算器
 
 Version: 1.0.0
-Live: https://welegendt2018.github.io/Usstork/
+Live: https://welegent2010.github.io/Usstork/
 
 一个功能完整的美股持仓成本计算器全栈应用，支持用户注册、登录、交易记录管理和实时盈亏计算。
 
