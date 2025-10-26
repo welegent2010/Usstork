@@ -93,6 +93,11 @@
                 {{ stock.quote.change >= 0 ? '+' : '' }}{{ stock.quote.change.toFixed(2) }}
                 ({{ stock.quote.changePercent }})
               </p>
+              <button
+                @click.stop="confirmAndDelete(stock.code)"
+                class="mt-2 text-xs px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100"
+                title="删除该股票"
+              >删除</button>
             </div>
           </div>
           
@@ -103,15 +108,15 @@
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-gray-600">总市值:</span>
-              <span class="font-medium">${{ stock.marketValue.toFixed(2) }}</span>
+              <span class="font-medium">${{ stock.marketValue != null ? stock.marketValue.toFixed(2) : '--' }}</span>
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-gray-600">盈亏:</span>
               <span 
                 class="font-medium"
-                :class="stock.profitLoss >= 0 ? 'text-success' : 'text-danger'"
+                :class="(stock.totalProfitLoss ?? 0) >= 0 ? 'text-success' : 'text-danger'"
               >
-                {{ stock.profitLoss >= 0 ? '+' : '' }}{{ stock.profitLossPercent.toFixed(2) }}%
+                {{ (stock.totalProfitLoss ?? 0) >= 0 ? '+' : '' }}{{ stock.profitLossPercent != null ? stock.profitLossPercent.toFixed(2) : '--' }}%
               </span>
             </div>
           </div>
@@ -141,6 +146,15 @@ const authStore = useAuthStore()
 
 const alphaVantageKey = ref('')
 const stockQuotes = ref({})
+
+const confirmAndDelete = async (code) => {
+  if (!code) return
+  if (!window.confirm(`确定删除 ${code} 的所有交易记录吗？该操作不可恢复。`)) return
+  const result = await tradesStore.deleteStock(code)
+  if (!result.success) {
+    alert(result.error || '删除失败')
+  }
+}
 
 // Initialize API key from localStorage
 onMounted(() => {
@@ -173,12 +187,12 @@ const fetchAllQuotes = async () => {
 const stocksWithQuotes = computed(() => {
   return Object.entries(tradesStore.trades).map(([code, stock]) => {
     const quote = stockQuotes.value[code]
-    const currentPrice = quote?.price || 0
-    const marketValue = currentPrice * stock.totalShares
+    const currentPrice = (quote && !quote.mock && typeof quote.price === 'number') ? quote.price : null
     const totalCost = stock.totalCost
-    const totalProfitLoss = marketValue - totalCost
-    const profitLossPercent = totalCost > 0 ? (totalProfitLoss / totalCost) * 100 : 0
-    
+    const marketValue = currentPrice != null ? currentPrice * stock.totalShares : null
+    const totalProfitLoss = currentPrice != null ? (marketValue - totalCost) : null
+    const profitLossPercent = (currentPrice != null && totalCost > 0) ? (totalProfitLoss / totalCost) * 100 : null
+
     return {
       ...stock,
       code,
@@ -196,7 +210,7 @@ const totalInvested = computed(() => {
 })
 
 const totalValue = computed(() => {
-  return stocksWithQuotes.value.reduce((sum, stock) => sum + stock.marketValue, 0)
+  return stocksWithQuotes.value.reduce((sum, stock) => sum + (stock.marketValue != null ? stock.marketValue : 0), 0)
 })
 
 // Fetch quotes when trades are loaded

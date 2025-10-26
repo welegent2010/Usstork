@@ -170,4 +170,22 @@ router.post('/simulate/:code', authMiddleware, [
   }
 });
 
+// Delete all trades for a specific stock code (for current user)
+router.delete('/:code', authMiddleware, async (req, res) => {
+  try {
+    const { code } = req.params;
+    const deleted = await Trade.destroy({
+      where: {
+        user_id: req.userId,
+        code: code.toUpperCase()
+      }
+    });
+
+    res.json({ success: true, deletedCount: deleted });
+  } catch (error) {
+    console.error('Delete stock trades error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

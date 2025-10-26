@@ -7,7 +7,7 @@
         <p class="text-gray-600 mt-1">共 {{ stockData.totalShares }} 股 • 平均成本 ${{ stockData.avgCost.toFixed(2) }}</p>
       </div>
       <div class="text-right">
-        <p class="text-2xl font-bold">${{ currentPrice.toFixed(2) }}</p>
+        <p class="text-2xl font-bold">${{ currentPrice != null ? currentPrice.toFixed(2) : '--' }}</p>
         <p 
           v-if="quote" 
           class="text-sm"
@@ -27,26 +27,26 @@
       </div>
       <div class="card">
         <h3 class="text-sm font-medium text-gray-500">当前市值</h3>
-        <p class="text-xl font-bold mt-2" :class="marketValue >= stockData.totalCost ? 'text-success' : 'text-danger'">
-          ${{ marketValue.toFixed(2) }}
+        <p class="text-xl font-bold mt-2" :class="(marketValue ?? 0) >= stockData.totalCost ? 'text-success' : 'text-danger'">
+          ${{ marketValue != null ? marketValue.toFixed(2) : '--' }}
         </p>
       </div>
       <div class="card">
         <h3 class="text-sm font-medium text-gray-500">总盈亏</h3>
         <p 
           class="text-xl font-bold mt-2"
-          :class="totalProfitLoss >= 0 ? 'text-success' : 'text-danger'"
+          :class="(totalProfitLoss ?? 0) >= 0 ? 'text-success' : 'text-danger'"
         >
-          {{ totalProfitLoss >= 0 ? '+' : '' }}{{ totalProfitLossPercent.toFixed(2) }}%
+          {{ (totalProfitLoss ?? 0) >= 0 ? '+' : '' }}{{ totalProfitLossPercent != null ? totalProfitLossPercent.toFixed(2) : '--' }}%
         </p>
       </div>
       <div class="card">
         <h3 class="text-sm font-medium text-gray-500">盈亏金额</h3>
         <p 
           class="text-xl font-bold mt-2"
-          :class="totalProfitLoss >= 0 ? 'text-success' : 'text-danger'"
+          :class="(totalProfitLoss ?? 0) >= 0 ? 'text-success' : 'text-danger'"
         >
-          {{ totalProfitLoss >= 0 ? '+' : '' }}$ {{ totalProfitLoss.toFixed(2) }}
+          {{ (totalProfitLoss ?? 0) >= 0 ? '+' : '' }}$ {{ totalProfitLoss != null ? totalProfitLoss.toFixed(2) : '--' }}
         </p>
       </div>
     </div>
@@ -217,21 +217,21 @@ const simulation = reactive({
 
 const simulationResult = ref(null)
 
-const currentPrice = computed(() => quote.value?.price || 0)
+const currentPrice = computed(() => (quote.value && !quote.value.mock && typeof quote.value.price === 'number') ? quote.value.price : null)
 
 const marketValue = computed(() => {
   if (!stockData.value) return 0
-  return currentPrice.value * stockData.value.totalShares
+  return currentPrice.value != null ? currentPrice.value * stockData.value.totalShares : null
 })
 
 const totalProfitLoss = computed(() => {
   if (!stockData.value) return 0
-  return marketValue.value - stockData.value.totalCost
+  return currentPrice.value != null ? (marketValue.value - stockData.value.totalCost) : null
 })
 
 const totalProfitLossPercent = computed(() => {
   if (!stockData.value || stockData.value.totalCost === 0) return 0
-  return (totalProfitLoss.value / stockData.value.totalCost) * 100
+  return totalProfitLoss.value != null ? (totalProfitLoss.value / stockData.value.totalCost) * 100 : null
 })
 
 const loadStockData = async () => {

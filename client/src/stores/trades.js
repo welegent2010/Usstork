@@ -67,6 +67,19 @@ export const useTradesStore = defineStore('trades', () => {
     }
   }
 
+  const deleteStock = async (code) => {
+    try {
+      const response = await api.delete(`/trades/${code}`)
+      await fetchTrades()
+      return { success: true, deletedCount: response.data.deletedCount }
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.error || '删除股票失败'
+      }
+    }
+  }
+
   return {
     trades,
     allTrades,
@@ -76,6 +89,7 @@ export const useTradesStore = defineStore('trades', () => {
     fetchTrades,
     addTrade,
     simulateTrade,
-    getStockTrades
+    getStockTrades,
+    deleteStock
   }
 })

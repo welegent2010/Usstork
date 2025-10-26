@@ -40,8 +40,43 @@ app.use((err, req, res, next) => {
 // Start server
 const startServer = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('Database connection established successfully.');
+    // Retry DB connection (useful when Postgres takes time to boot)
+    const maxRetries = 10; // more resilient on cold starts
+    const delayMs = 5000;
+    // Log sanitized DB target for diagnostics
+    const rawDbUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL || process.env.RAILWAY_DATABASE_URL || process.env.POSTGRES_URL;
+    if (rawDbUrl) {
+      try {
+        const u = new URL(rawDbUrl);
+        const ssl = /sslmode=require/i.test(rawDbUrl) ? 'require' : 'optional';
+        console.log(`DB target: ${u.protocol}//${u.hostname}:${u.port}${u.pathname} (ssl=${ssl})`);
+      } catch {}
+    } else {
+      console.log('DB target: not set, falling back to SQLite or local Postgres depending on DB_TYPE');
+    }
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await sequelize.authenticate();
+        console.log('Database connection established successfully.');
+        break;
+      } catch (err) {
+        console.error(`Database connection failed (attempt ${attempt}/${maxRetries}):`, err.message || err);
+        if (attempt === maxRetries) throw err;
+        await new Promise(r => setTimeout(r, delayMs));
+      }
+    }
+
+    // 在生产环境自动同步数据库模型（不会删除数据，alter 会根据模型变更调整表结构）
+    // 这样无需单独运行迁移脚本，首次部署即可创建 users、trades 等表
+    if ((process.env.NODE_ENV || 'development') === 'production') {
+      await sequelize.sync({ alter: true });
+      console.log('Models synchronized (production, alter: true).');
+    } else {
+      // 开发环境：确保 SQLite/开发数据库自动创建缺失的表，避免“no such table”导致 500
+      await sequelize.sync();
+      console.log('Models synchronized (development).');
+    }
     
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

@@ -4,30 +4,40 @@ const path = require('path');
 // Database configuration
 const isProduction = process.env.NODE_ENV === 'production';
 const dbType = process.env.DB_TYPE || 'sqlite';
+// Prefer explicit DATABASE_URL; also support DATABASE_PUBLIC_URL used by Railway TCP proxy
+const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL || process.env.RAILWAY_DATABASE_URL || process.env.POSTGRES_URL;
 
 let sequelize;
 
-if (isProduction && process.env.DATABASE_URL) {
-  // Production PostgreSQL
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
+if (databaseUrl) {
+  // Prefer external Postgres when DATABASE_URL (or compatible) is present
+  const needSSL = isProduction || /sslmode=require/i.test(databaseUrl) || /railway/i.test(databaseUrl);
+  sequelize = new Sequelize(databaseUrl, {
     dialect: 'postgres',
     protocol: 'postgres',
-    dialectOptions: {
+    dialectOptions: needSSL ? {
       ssl: {
         require: true,
         rejectUnauthorized: false
       }
+    } : {},
+    // Keep a modest pool size to avoid overwhelming free-tier Postgres
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
     },
     logging: false
   });
 } else if (dbType === 'postgres') {
-  // Development PostgreSQL
-  sequelize = new Sequelize(process.env.DATABASE_URL || 'postgres://localhost:5432/stockcalc', {
+  // Development PostgreSQL (local)
+  sequelize = new Sequelize('postgres://localhost:5432/stockcalc', {
     dialect: 'postgres',
     logging: false
   });
 } else {
-  // Development SQLite
+  // Development SQLite (default)
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: path.join(__dirname, '../../dev.db'),

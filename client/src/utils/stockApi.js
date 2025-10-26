@@ -1,10 +1,22 @@
 const ALPHA_VANTAGE_API_KEY = localStorage.getItem('alphaVantageKey') || 'demo'
+// Normalize user-entered symbols like "INTCUS" or "LAC US" -> "INTC" / "LAC"
+export const normalizeSymbol = (symbol) => {
+  if (!symbol) return ''
+  let s = String(symbol).toUpperCase().trim()
+  // remove spaces
+  s = s.replace(/\s+/g, '')
+  // remove common US suffix patterns: US, .US, -US, :US, /US
+  s = s.replace(/(?:\.|-|:|\/)?US$/, '')
+  return s
+}
+
 const API_BASE = 'https://www.alphavantage.co/query'
 
 export const getStockQuote = async (symbol) => {
   try {
     const apiKey = localStorage.getItem('alphaVantageKey') || 'demo'
-    const response = await fetch(`${API_BASE}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`)
+    const norm = normalizeSymbol(symbol)
+    const response = await fetch(`${API_BASE}?function=GLOBAL_QUOTE&symbol=${norm}&apikey=${apiKey}`)
     const data = await response.json()
     
     if (data['Global Quote'] && data['Global Quote']['05. price']) {

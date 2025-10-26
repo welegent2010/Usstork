@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || '/api',
+  baseURL: import.meta.env.VITE_API_BASE || 'https://backend-production-559d.up.railway.app/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -30,7 +30,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      // 在 GitHub Pages 子路径下（例如 /Usstork/），确保跳转到正确的登录地址
+      // 使用 BASE_URL 拼接 login，避免跳到根域名的 /login 导致找不到页面
+      window.location.href = (import.meta.env.BASE_URL || '/') + 'login'
     }
     return Promise.reject(error)
   }
