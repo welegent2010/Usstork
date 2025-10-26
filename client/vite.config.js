@@ -24,10 +24,5 @@ export default defineConfig({
   build: {
     outDir: '../docs', // 将构建产物输出到仓库根的 docs 目录
     emptyOutDir: true  // 构建前清空输出目录
-  },
-  define: {
-    'process.env': {
-      VITE_API_BASE: process.env.VITE_API_BASE || 'http://localhost:4000/api'
-    }
   }
 })

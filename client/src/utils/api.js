@@ -1,7 +1,15 @@
 import axios from 'axios'
 
+const resolveBaseURL = () => {
+  const envBase = import.meta.env.VITE_API_BASE
+  const isHttp = typeof envBase === 'string' && /^https?:\/\//.test(envBase)
+  if (isHttp) return envBase
+  if (import.meta.env.DEV) return '/api'
+  return 'https://backend-production-559d.up.railway.app/api'
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || 'https://backend-production-559d.up.railway.app/api',
+  baseURL: resolveBaseURL(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

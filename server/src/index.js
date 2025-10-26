@@ -13,10 +13,25 @@ const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(helmet());
+
+// Allow multiple origins: production Pages and local dev preview
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:5174'
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow non-browser requests (like curl) with no origin
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Otherwise, block
+    return callback(null, false);
+  },
   credentials: true
 }));
+
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -41,18 +56,16 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     // Retry DB connection (useful when Postgres takes time to boot)
-    const maxRetries = 10; // more resilient on cold starts
-    const delayMs = 5000;
+    const maxRetries = 5;
+    const delayMs = 2000;
     // Log sanitized DB target for diagnostics
-    const rawDbUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL || process.env.RAILWAY_DATABASE_URL || process.env.POSTGRES_URL;
+    const rawDbUrl = process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL || process.env.POSTGRES_URL;
     if (rawDbUrl) {
       try {
         const u = new URL(rawDbUrl);
         const ssl = /sslmode=require/i.test(rawDbUrl) ? 'require' : 'optional';
         console.log(`DB target: ${u.protocol}//${u.hostname}:${u.port}${u.pathname} (ssl=${ssl})`);
       } catch {}
-    } else {
-      console.log('DB target: not set, falling back to SQLite or local Postgres depending on DB_TYPE');
     }
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {

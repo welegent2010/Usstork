@@ -7,13 +7,13 @@ WORKDIR /app
 # 复制package文件
 COPY package*.json ./
 
-# 安装依赖
-RUN npm ci --only=production
+# 安装依赖（根目录没有 package-lock.json，使用 npm install 以避免 npm ci 的锁文件限制）
+RUN npm install
 
 # 复制应用代码
 COPY . .
 
-# 安装所有依赖（包括dev依赖用于构建）
+# 安装所有依赖（包括 dev 依赖用于构建前端）
 RUN npm run install:all
 
 # 构建前端

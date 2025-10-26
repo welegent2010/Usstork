@@ -85,6 +85,7 @@
             </div>
             <div class="text-right">
               <p class="text-lg font-semibold">${{ stock.currentPrice?.toFixed(2) || '--' }}</p>
+              <p v-if="stock.quote?.mock" class="text-xs text-gray-500">(模拟)</p>
               <p 
                 v-if="stock.quote" 
                 class="text-sm"
@@ -124,9 +125,9 @@
           <div class="mt-4 pt-4 border-t border-gray-200">
             <div 
               class="text-sm font-medium"
-              :class="stock.totalProfitLoss >= 0 ? 'text-success' : 'text-danger'"
+              :class="(stock.totalProfitLoss ?? 0) >= 0 ? 'text-success' : 'text-danger'"
             >
-              总盈亏: ${{ stock.totalProfitLoss.toFixed(2) }}
+              总盈亏: ${{ stock.totalProfitLoss != null ? stock.totalProfitLoss.toFixed(2) : '--' }}
             </div>
           </div>
         </div>
