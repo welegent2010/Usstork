@@ -17,6 +17,7 @@ app.use(helmet());
 // Allow multiple origins: production Pages and local dev preview
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  'https://welegent2010.github.io',
   'http://localhost:5173',
   'http://localhost:5174'
 ].filter(Boolean);
